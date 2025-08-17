@@ -1,0 +1,12 @@
+# Create a 2D list (matrix) for the grid
+grid = [
+    ["-", "-", "-", "-", "-"],
+    ["-", "-", "-", "-", "-"],
+    ["-", "-", "-", "-", "-"],
+    ["-", "-", "-", "-", "-"],
+    ["-", "-", "-", "-", "-"]
+]
+
+# Print the grid
+for row in grid:
+    print(" ".join(row))

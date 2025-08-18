@@ -1,0 +1,62 @@
+import random
+
+# Grid setup
+WIDTH, HEIGHT = 5, 5
+obstacles = {(1, 1), (2, 2), (3, 1)}
+targets = {(4, 4), (0, 4)}
+
+# Check if position is valid (inside grid & not obstacle)
+def valid(pos):
+    x, y = pos
+    if 0 <= x < WIDTH and 0 <= y < HEIGHT and pos not in obstacles:
+        return True
+    return False
+
+# Get valid moves (up, down, left, right)
+def get_moves(pos):
+    x, y = pos
+    moves = {
+        'up': (x, y-1),
+        'down': (x, y+1),
+        'left': (x-1, y),
+        'right': (x+1, y)
+    }
+    return {dir: p for dir, p in moves.items() if valid(p)}
+
+def reflex_agent(start):
+    pos = start
+    visited = set()
+
+    for step in range(20):
+        print(f"Step {step+1}: at {pos}")
+
+        # If current pos is target, mark visited
+        if pos in targets and pos not in visited:
+            visited.add(pos)
+            print(f"  -> Visited target at {pos}")
+            if visited == targets:
+                print("All targets visited! Done.")
+                break
+
+        moves = get_moves(pos)
+        if not moves:
+            print("No moves available! Stuck.")
+            break
+
+        # Move toward nearest unvisited target if adjacent
+        moved = False
+        for dir, p in moves.items():
+            if p in targets and p not in visited:
+                pos = p
+                print(f"  -> Move {dir} to target {pos}")
+                moved = True
+                break
+
+        # Else move randomly
+        if not moved:
+            dir, p = random.choice(list(moves.items()))
+            pos = p
+            print(f"  -> Move {dir} to {pos}")
+
+if __name__ == "__main__":
+    reflex_agent(start=(0,0))

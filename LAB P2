@@ -1,5 +1,3 @@
-# Tic Tac Toe Game in Python
-
 def print_board(board):
     print("\n")
     for row in board:
@@ -40,23 +38,77 @@ def get_move(player):
         except ValueError:
             print("Please enter row and column as two numbers separated by a space.")
 
+def minimax(board, depth, is_maximizing):
+    if check_winner(board, "O"):
+        return 10 - depth
+    if check_winner(board, "X"):
+        return depth - 10
+    if is_full(board):
+        return 0
+
+    if is_maximizing:
+        best_score = -float('inf')
+        for i in range(3):
+            for j in range(3):
+                if board[i][j] == " ":
+                    board[i][j] = "O"
+                    score = minimax(board, depth + 1, False)
+                    board[i][j] = " "
+                    if score > best_score:
+                        best_score = score
+        return best_score
+    else:
+        best_score = float('inf')
+        for i in range(3):
+            for j in range(3):
+                if board[i][j] == " ":
+                    board[i][j] = "X"
+                    score = minimax(board, depth + 1, True)
+                    board[i][j] = " "
+                    if score < best_score:
+                        best_score = score
+        return best_score
+
+def best_move(board):
+    best_score = -float('inf')
+    move = None
+    for i in range(3):
+        for j in range(3):
+            if board[i][j] == " ":
+                board[i][j] = "O"
+                score = minimax(board, 0, False)
+                board[i][j] = " "
+                if score > best_score:
+                    best_score = score
+                    move = (i, j)
+    return move
+
 def main():
     board = [[" " for _ in range(3)] for _ in range(3)]
-    current_player = "X"
+    current_player = "X"  # Human always starts first
 
     while True:
         print_board(board)
-        row, col = get_move(current_player)
 
-        if board[row][col] != " ":
-            print("That cell is already taken. Try again.")
-            continue
+        if current_player == "X":
+            row, col = get_move(current_player)
+            if board[row][col] != " ":
+                print("That cell is already taken. Try again.")
+                continue
+            board[row][col] = "X"
+        else:
+            print("Computer is making a move...")
+            move = best_move(board)
+            if move:
+                board[move[0]][move[1]] = "O"
 
-        board[row][col] = current_player
-
+        # Check for winner or draw
         if check_winner(board, current_player):
             print_board(board)
-            print(f"Player {current_player} wins!")
+            if current_player == "X":
+                print("Congratulations! You win!")
+            else:
+                print("Computer wins!")
             break
 
         if is_full(board):
@@ -64,6 +116,7 @@ def main():
             print("It's a draw!")
             break
 
+        # Switch player
         current_player = "O" if current_player == "X" else "X"
 
 if __name__ == "__main__":

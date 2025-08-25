@@ -1,62 +1,122 @@
 import random
+import time
 
-# Grid setup
-WIDTH, HEIGHT = 5, 5
-obstacles = {(1, 1), (2, 2), (3, 1)}
-targets = {(4, 4), (0, 4)}
+class GridEnvironment:
+    def __init__(self, width, height, obstacles, objects, goal):
+        self.width = width
+        self.height = height
+        self.grid = [['.' for _ in range(width)] for _ in range(height)]
+        self.obstacles = obstacles
+        self.objects = objects
+        self.goal = goal
+        self.place_elements()
 
-# Check if position is valid (inside grid & not obstacle)
-def valid(pos):
-    x, y = pos
-    if 0 <= x < WIDTH and 0 <= y < HEIGHT and pos not in obstacles:
-        return True
-    return False
+    def place_elements(self):
+        for x, y in self.obstacles:
+            self.grid[y][x] = '#'
+        for x, y in self.objects:
+            self.grid[y][x] = 'O'
+        gx, gy = self.goal
+        self.grid[gy][gx] = 'G'
 
-# Get valid moves (up, down, left, right)
-def get_moves(pos):
-    x, y = pos
-    moves = {
-        'up': (x, y-1),
-        'down': (x, y+1),
-        'left': (x-1, y),
-        'right': (x+1, y)
-    }
-    return {dir: p for dir, p in moves.items() if valid(p)}
+    def display(self, agent_pos):
+        for y in range(self.height):
+            row = ''
+            for x in range(self.width):
+                if (x, y) == agent_pos:
+                    row += 'A '
+                else:
+                    row += self.grid[y][x] + ' '
+            print(row)
+        print()
 
-def reflex_agent(start):
-    pos = start
-    visited = set()
+    def get_cell(self, x, y):
+        if 0 <= x < self.width and 0 <= y < self.height:
+            return self.grid[y][x]
+        return '#'
 
-    for step in range(20):
-        print(f"Step {step+1}: at {pos}")
+    def update_cell(self, x, y, value):
+        if 0 <= x < self.width and 0 <= y < self.height:
+            self.grid[y][x] = value
 
-        # If current pos is target, mark visited
-        if pos in targets and pos not in visited:
-            visited.add(pos)
-            print(f"  -> Visited target at {pos}")
-            if visited == targets:
-                print("All targets visited! Done.")
-                break
 
-        moves = get_moves(pos)
-        if not moves:
-            print("No moves available! Stuck.")
-            break
+class ReflexAgent:
+    def __init__(self, env, start_pos):
+        self.env = env
+        self.pos = start_pos
+        self.collected = []
 
-        # Move toward nearest unvisited target if adjacent
-        moved = False
-        for dir, p in moves.items():
-            if p in targets and p not in visited:
-                pos = p
-                print(f"  -> Move {dir} to target {pos}")
-                moved = True
-                break
+    def sense(self):
+        x, y = self.pos
+        directions = {
+            'up': (x, y - 1),
+            'down': (x, y + 1),
+            'left': (x - 1, y),
+            'right': (x + 1, y)
+        }
+        percept = {}
+        for dir, (nx, ny) in directions.items():
+            percept[dir] = self.env.get_cell(nx, ny)
+        return percept
 
-        # Else move randomly
-        if not moved:
-            dir, p = random.choice(list(moves.items()))
-            pos = p
-            print(f"  -> Move {dir} to {pos}")
+    def rule_match(self, percept):
+        """Rule-based decisions with priorities: Object > Goal > Free space"""
+        for direction, content in percept.items():
+            if content == 'O':
+                return direction
+        for direction, content in percept.items():
+            if content == 'G':
+                return direction
+        free_moves = [d for d, c in percept.items() if c == '.']
+        return random.choice(free_moves) if free_moves else None
 
-if __name__ == "__main__":
-    reflex_agent(start=(0,0))
+    def move(self, direction):
+        dx, dy = {
+            'up': (0, -1),
+            'down': (0, 1),
+            'left': (-1, 0),
+            'right': (1, 0)
+        }[direction]
+
+        new_x = self.pos[0] + dx
+        new_y = self.pos[1] + dy
+        cell = self.env.get_cell(new_x, new_y)
+
+        if cell != '#' and 0 <= new_x < self.env.width and 0 <= new_y < self.env.height:
+            self.pos = (new_x, new_y)
+            if cell == 'O':
+                print(f"Collected object at {self.pos}")
+                self.collected.append(self.pos)
+                self.env.update_cell(new_x, new_y, '.')
+            elif cell == 'G':
+                print(f"Reached goal at {self.pos}")
+                return True
+        return False
+
+    def step(self):
+        percept = self.sense()
+        direction = self.rule_match(percept)
+        if direction:
+            return self.move(direction)
+        else:
+            print("No valid moves! Agent is stuck.")
+            return False
+
+
+# --- Simulation Setup ---
+obstacles = [(1, 1), (2, 2), (3, 3)]
+objects = [(0, 2), (4, 1)]
+goal = (4, 4)
+start_pos = (0, 0)
+
+env = GridEnvironment(6, 6, obstacles, objects, goal)
+agent = ReflexAgent(env, start_pos)
+
+# --- Run Simulation with delayed output ---
+for step in range(50):
+    print(f"Step {step + 1}")
+    env.display(agent.pos)
+    if agent.step():
+        print("Task completed.")
+        break
+    time.sleep(1)  # Delay for 1 second before next step

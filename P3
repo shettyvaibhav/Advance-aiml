@@ -1,0 +1,32 @@
+# Simple Probability Demo with User Input
+
+# Sample space input
+n = int(input("Enter the number of outcomes in the sample space: "))
+S = set(range(1, n + 1))
+print("Sample space S:", S)
+
+# Event A input
+A = set(map(int, input("Enter elements of Event A (comma-separated): ").split(',')))
+
+# Event B input
+B = set(map(int, input("Enter elements of Event B (comma-separated): ").split(',')))
+
+# Probability function
+def P(event):
+    return len(event) / len(S)
+
+# Calculations
+print("\n--- Probability Results ---")
+print("P(A) =", P(A))
+print("P(B) =", P(B))
+
+print("P(A ∪ B) =", P(A | B))
+print("P(A ∩ B) =", P(A & B))
+print("P(A') =", P(S - A))
+
+# Independence check
+print("\n--- Independence Check ---")
+if abs(P(A & B) - P(A) * P(B)) < 1e-6:
+    print(" A and B are independent")
+else:
+    print("A and B are not independent")
